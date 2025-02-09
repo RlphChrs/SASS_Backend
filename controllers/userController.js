@@ -4,7 +4,7 @@ const { admin } = require('../config/firebaseConfig');
 // Registration
 exports.register = async (req, res) => {
   try {
-    console.log(req.body);
+  
     const { schoolName, firstName, lastName, email, password } = req.body;
     
     //Validation Nigga
