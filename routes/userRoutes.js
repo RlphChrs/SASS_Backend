@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { register, login } = require('../controllers/userController');
-const { validateRegistration } = require('../middlewares/validateInput');
+const { registerSAO, registerWithGoogle } = require('../controllers/userController');
+const { authenticate, authorize } = require('../middlewares/authMiddleware');
 
+router.post('/register/sao', registerSAO);
+router.post('/register/google', registerWithGoogle);
 
-router.post('/register', validateRegistration, register);
-router.post('/login', login);
+router.get('/admin-dashboard', authenticate, authorize(['Super Admin', 'School Admin']), (req, res) => {
+  res.send('Welcome to the Admin Dashboard.');
+});
 
 module.exports = router;

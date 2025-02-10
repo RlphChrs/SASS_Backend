@@ -1,13 +1,28 @@
 const { db } = require('../config/firebaseConfig');
+const bcrypt = require('bcryptjs');
 
-const addUser = async (user) => {
-  await db.collection('users').doc(user.uid).set(user);
+const createUser = async (userId, email, password, role, schoolId, firstName, lastName) => {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await db.collection('users').doc(userId).set({
+    userId,
+    email,
+    password: hashedPassword,
+    role,
+    schoolId,
+    firstName,
+    lastName,
+    createdAt: new Date()
+  });
+};
+
+const getUserById = async (userId) => {
+  const userDoc = await db.collection('users').doc(userId).get();
+  return userDoc.exists ? userDoc.data() : null;
 };
 
 const getUserByEmail = async (email) => {
-  const snapshot = await db.collection('users').where('email', '==', email).get();
-  if (snapshot.empty) return null;
-  return snapshot.docs[0].data();
+  const userSnapshot = await db.collection('users').where('email', '==', email).get();
+  return userSnapshot.empty ? null : userSnapshot.docs[0].data();
 };
 
-module.exports = { addUser, getUserByEmail };
+module.exports = { createUser, getUserById, getUserByEmail };

@@ -1,64 +1,43 @@
-const { addUser, getUserByEmail } = require('../model/userModel');
-const { admin } = require('../config/firebaseConfig');
+const { createUser, getUserByEmail } = require('../model/userModel');
 
-// Registration
-exports.register = async (req, res) => {
+const registerSAO = async (req, res) => {
+  const { userId, email, password, repeatPassword, schoolName, firstName, lastName, termsAccepted } = req.body;
+
+  if (!termsAccepted) {
+    return res.status(400).json({ message: 'You must accept the terms and conditions.' });
+  }
+
+  if (password !== repeatPassword) {
+    return res.status(400).json({ message: 'Passwords do not match.' });
+  }
+
   try {
-  
-    const { schoolName, firstName, lastName, email, password } = req.body;
-    
-    //Validation Nigga
-    if (!schoolName || !firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-     
-    const fullName = `${firstName} ${lastName}`; 
-
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'Email already registered.' });
     }
 
-    // Create User in Firebase Authentication
-    const userRecord = await admin.auth().createUser({
-      email,
-      password,
-      displayName: fullName,
-    });
-
-    // Save to Firestore
-    await addUser({
-      uid: userRecord.uid,
-      schoolName,
-      firstName,
-      lastName,
-      fullName,
-      email,
-      createdAt: new Date().toISOString(),
-    });
-
-    res.status(201).json({ message: 'User registered successfully' });
+    await createUser(userId, email, password, 'School Admin', schoolName, firstName, lastName);
+    res.status(201).json({ message: 'School Admin registered successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Registration failed', error });
   }
 };
 
-// Login
-exports.login = async (req, res) => {
+const registerWithGoogle = async (req, res) => {
+  const { userId, email, schoolName, firstName, lastName } = req.body;
+
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered.' });
     }
 
-    const user = await getUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.status(200).json({ message: 'Login successful', user });
+    await createUser(userId, email, null, 'School Admin', schoolName, firstName, lastName);
+    res.status(201).json({ message: 'School Admin registered successfully with Google' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Google Registration failed', error });
   }
 };
+
+module.exports = { registerSAO, registerWithGoogle };
