@@ -1,4 +1,6 @@
 const { createUser, getUserByEmail } = require('../model/userModel');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const registerSAO = async (req, res) => {
   const { userId, email, password, repeatPassword, schoolName, firstName, lastName, termsAccepted } = req.body;
@@ -40,4 +42,25 @@ const registerWithGoogle = async (req, res) => {
   }
 };
 
-module.exports = { registerSAO, registerWithGoogle };
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password.' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid email or password.' });
+    }
+
+    const token = jwt.sign({ id: user.userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ message: 'Login successful', token });
+  } catch (error) {
+    res.status(500).json({ message: 'Login failed', error });
+  }
+};
+
+module.exports = { registerSAO, registerWithGoogle, loginUser };
