@@ -1,10 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const userRoutes = require('../routes/sao/userRoutes');
-const studentRoutes = require('../routes/student/studentRoutes');
-const adminRoutes = require('../routes/admin/adminRoutes');
-const uploadRoutes = require('../routes/sao/uploadRoutes');
+const userRoutes = require('./routes/sao/userRoutes');
+const studentRoutes = require('./routes/student/studentRoutes');
+const adminRoutes = require('./routes/admin/adminRoutes');
+const uploadRoutes = require('./routes/sao/uploadRoutes');
 
 dotenv.config();
 
