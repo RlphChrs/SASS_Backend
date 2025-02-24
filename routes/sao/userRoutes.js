@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { registerSAO, registerWithGoogle, loginUser } = require('../controllers/userController');
-const { authenticate, authorize } = require('../middlewares/authMiddleware');
+const { registerSAO, registerWithGoogle, loginUser } = require('../../controllers/sao/userController');
+const { authenticate, authorize } = require('../../middlewares/authMiddleware');
 
 router.post('/register/sao', registerSAO);
 router.post('/register/google', registerWithGoogle);
