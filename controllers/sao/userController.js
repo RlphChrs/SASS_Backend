@@ -43,6 +43,7 @@ const registerWithGoogle = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
+  console.log("Login Request Received", req.body)
   const { email, password } = req.body;
 
   try {
@@ -56,7 +57,7 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password.' });
     }
 
-    const token = jwt.sign({ id: user.userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '5h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
     res.status(500).json({ message: 'Login failed', error });
