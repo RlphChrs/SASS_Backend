@@ -1,24 +1,22 @@
 const { db, admin } = require('../../config/firebaseConfig');
-
 const bucket = admin.storage().bucket();
 
-/**
- * Upload a file to Firebase Storage and link it to a school.
- */
+
 const uploadFile = async (req, res) => {
     try {
-        const { uid, schoolId } = req.user; // From authentication middleware
-        const file = req.file;
+        console.log("🔹 Received File:", req.file); 
+        console.log("🔹 Received Body:", req.body);
 
-        if (!file) {
+        if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        // Unique file path: "schools/{schoolId}/{timestamp}_{originalname}"
+        const { uid, schoolId } = req.user; 
+        const file = req.file;
+
         const fileName = `schools/${schoolId}/${Date.now()}_${file.originalname}`;
         const fileUpload = bucket.file(fileName);
 
-        // Upload file to Firebase Storage
         const stream = fileUpload.createWriteStream({
             metadata: { contentType: file.mimetype }
         });
@@ -29,7 +27,6 @@ const uploadFile = async (req, res) => {
             await fileUpload.makePublic();
             const fileUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
 
-            // Save file details to Firestore
             await db.collection('uploads').add({
                 schoolId,
                 uploadedBy: uid,
@@ -44,9 +41,11 @@ const uploadFile = async (req, res) => {
 
         stream.end(file.buffer);
     } catch (error) {
+        console.error("❌ Upload Error:", error.message);
         res.status(500).json({ message: 'Upload failed', error: error.message });
     }
 };
+
 
 /**
  * Get uploaded files for the logged-in SAO's school.

@@ -7,7 +7,7 @@ router.post('/register/sao', registerSAO);
 router.post('/register/google', registerWithGoogle);
 router.post('/login', loginUser);
 
-router.get('/admin-dashboard', authenticate, authorize(['Super Admin', 'School Admin']), (req, res) => {
+router.get('/admin-dashboard', authenticate, authorize(['School Admin']), (req, res) => {
   res.send('Welcome to the Admin Dashboard.');
 });
 
