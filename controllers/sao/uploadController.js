@@ -1,13 +1,13 @@
 const { db, admin } = require('../../config/firebaseConfig');
 const bucket = admin.storage().bucket();
 
-
 const uploadFile = async (req, res) => {
     try {
-        console.log("🔹 Received File:", req.file); 
+        console.log("🔹 Received File:", req.file); // ✅ Debugging
         console.log("🔹 Received Body:", req.body);
 
         if (!req.file) {
+            console.error("❌ No file received in request");
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
@@ -27,7 +27,7 @@ const uploadFile = async (req, res) => {
             await fileUpload.makePublic();
             const fileUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
 
-            await db.collection('uploads').add({
+            const fileDoc = await db.collection('uploads').add({
                 schoolId,
                 uploadedBy: uid,
                 fileName: file.originalname,
@@ -36,7 +36,7 @@ const uploadFile = async (req, res) => {
                 uploadedAt: new Date()
             });
 
-            res.status(201).json({ message: 'File uploaded successfully', fileUrl });
+            res.status(201).json({ message: 'File uploaded successfully', fileUrl, fileId: fileDoc.id });
         });
 
         stream.end(file.buffer);
@@ -47,9 +47,6 @@ const uploadFile = async (req, res) => {
 };
 
 
-/**
- * Get uploaded files for the logged-in SAO's school.
- */
 const getUploadedFiles = async (req, res) => {
     try {
         const { schoolId } = req.user;
@@ -63,4 +60,36 @@ const getUploadedFiles = async (req, res) => {
     }
 };
 
-module.exports = { uploadFile, getUploadedFiles };
+const deleteFile = async (req, res) => {
+    try {
+        const { fileUrl, fileId } = req.body;
+
+        if (!fileUrl || !fileId) {
+            return res.status(400).json({ message: 'File ID and URL are required' });
+        }
+
+        const storageBucketUrl = `https://storage.googleapis.com/${bucket.name}/`;
+        const filePath = fileUrl.replace(storageBucketUrl, "");
+
+        console.log("🔹 Deleting File:", filePath);
+
+        const file = bucket.file(filePath);
+        const [exists] = await file.exists();
+
+        if (!exists) {
+            console.error("❌ File does not exist in Firebase Storage:", filePath);
+            return res.status(404).json({ message: 'File not found in storage' });
+        }
+
+        await file.delete();
+        await db.collection('uploads').doc(fileId).delete();
+
+        console.log("✅ File deleted successfully:", filePath);
+        res.status(200).json({ message: 'File deleted successfully' });
+    } catch (error) {
+        console.error("❌ Delete Error:", error.message);
+        res.status(500).json({ message: 'Failed to delete file', error: error.message });
+    }
+};
+
+module.exports = { uploadFile, getUploadedFiles, deleteFile };
