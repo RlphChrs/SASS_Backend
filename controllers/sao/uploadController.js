@@ -1,9 +1,13 @@
 const { db, admin } = require('../../config/firebaseConfig');
+const { watchFileUpload } = require('../../config/fileWatcher'); 
+const axios = require("axios");
+
+
 const bucket = admin.storage().bucket();
 
 const uploadFile = async (req, res) => {
     try {
-        console.log("🔹 Received File:", req.file); // ✅ Debugging
+        console.log("🔹 Received File:", req.file);
         console.log("🔹 Received Body:", req.body);
 
         if (!req.file) {
@@ -14,7 +18,7 @@ const uploadFile = async (req, res) => {
         const { uid, schoolId } = req.user; 
         const file = req.file;
 
-        const fileName = `schools/${schoolId}/${Date.now()}_${file.originalname}`;
+        const fileName = `schools/${schoolId}/pdfs/${Date.now()}_${file.originalname}`;
         const fileUpload = bucket.file(fileName);
 
         const stream = fileUpload.createWriteStream({
@@ -36,6 +40,11 @@ const uploadFile = async (req, res) => {
                 uploadedAt: new Date()
             });
 
+            console.log("✅ File uploaded successfully:", fileUrl);
+
+            // 🔹 Call the file watcher to notify Python API
+            watchFileUpload(fileName);
+
             res.status(201).json({ message: 'File uploaded successfully', fileUrl, fileId: fileDoc.id });
         });
 
@@ -45,7 +54,6 @@ const uploadFile = async (req, res) => {
         res.status(500).json({ message: 'Upload failed', error: error.message });
     }
 };
-
 
 const getUploadedFiles = async (req, res) => {
     try {
