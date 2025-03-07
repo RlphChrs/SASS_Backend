@@ -1,6 +1,15 @@
 const { db } = require("../config/firebaseConfig");
 const subscriptionsRef = db.collection("subscriptions");
 
+
+// get all plans
+const getAllPlans = async () => {
+    const querySnapshot = await  subscriptionsRef.get();
+    console.log('snapchattt', querySnapshot)
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+
 //check by name
 const findSubscriptionByName = async (planName) => {
     const snapshot = await subscriptionsRef.where("planName", "==", planName).get();
@@ -23,4 +32,4 @@ const deleteSubscription = async (id) => {
     return true;
 };
 
-module.exports = {findSubscriptionByName, createSubscription, deleteSubscription};
+module.exports = {findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans };

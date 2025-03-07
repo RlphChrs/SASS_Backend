@@ -1,20 +1,20 @@
-const { admin } = require('../config/firebaseConfig');
-const { getUserById } = require('../model/userModel');
-const jwt = require('jsonwebtoken');
+const { admin } = require("../config/firebaseConfig");
+const { getUserById } = require("../model/userModel");
+const jwt = require("jsonwebtoken");
 
 const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
 
   try {
     // Check if the token belongs to the Super Admin
     if (token === process.env.SUPER_ADMIN_TOKEN) {
-      req.user = { role: 'Super Admin' }; // Super Admin access
+      req.user = { role: "Super Admin" }; // Super Admin access
       return next();
     }
 
@@ -26,7 +26,7 @@ const authenticate = async (req, res, next) => {
     // Retrieve user details from Firestore
     const user = await getUserById(decodedToken.id);
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.status(401).json({ message: "User not found" });
     }
 
     // Attach user details to request
@@ -36,13 +36,13 @@ const authenticate = async (req, res, next) => {
       role: user.role,
       schoolId: user.schoolId,
       firstName: user.firstName,
-      lastName: user.lastName
+      lastName: user.lastName,
     };
 
     next();
   } catch (error) {
     console.error("JWT Verification Error:", error.message);
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
@@ -50,7 +50,7 @@ const authenticate = async (req, res, next) => {
 const authorize = (roles) => {
   return async (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Forbidden: Access Denied' });
+      return res.status(403).json({ message: "Forbidden: Access Denied" });
     }
     next();
   };
