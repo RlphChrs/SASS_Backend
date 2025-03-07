@@ -12,13 +12,14 @@ const authenticate = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // If the token matches the Super Admin token, allow access
+    // Check if the token belongs to the Super Admin
     if (token === process.env.SUPER_ADMIN_TOKEN) {
       req.user = { role: 'Super Admin' }; // Super Admin access
       return next();
     }
 
-    // Otherwise, verify SAO/Admin token
+    // Otherwise, verify SAO/Admin token (ayni tangtanga par gamit ni pang testing postman,
+    //  need sya token taga login para ma testingan
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     console.log("Decoded Token:", decodedToken);
 
@@ -45,6 +46,7 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+// Allow only specified roles to access certain routes
 const authorize = (roles) => {
   return async (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

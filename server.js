@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { db } = require('./config/firebaseConfig'); 
 const userRoutes = require('./routes/sao/userRoutes');
 const studentRoutes = require('./routes/student/studentRoutes');
 const adminRoutes = require('./routes/admin/adminRoutes');
@@ -10,7 +11,6 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    //added this for debugging purposes
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
