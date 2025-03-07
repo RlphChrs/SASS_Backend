@@ -1,9 +1,22 @@
-const { findSubscriptionByName, createSubscription, deleteSubscription } = require("../../model/subscriptionModel");
+const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans } = require("../../model/subscriptionModel");
+
+// get subs
+const getSubscriptions = async (_, res) => {
+    try {
+        const plans = await getAllPlans()
+       
+        return res.status(200).json({ success: true, plans })
+    } catch (e) {
+        return res.status(500).json({ success: false, message: 'Error fetching subscriptions', error: e.message})
+    }
+}
 
 //crerate subs
 const createSubscriptionController = async (req, res) => {
     try {
-        const { planName, paymentType, price, billingPeriod, trialPeriod, features } = req.body;
+        const { name: planName, billingType: paymentType, price, currency, billingPeriod, trialPeriod, features } = req.body;
+
+        console.log('currency is: ', currency)
 
         // ✅ Validate required fields
         if (!planName || !paymentType || !price || !billingPeriod || !features) {
@@ -27,6 +40,7 @@ const createSubscriptionController = async (req, res) => {
             planName,
             paymentType,  
             price,
+            currency,
             billingPeriod, 
             trialPeriod: trialPeriodData,
             features, 
@@ -61,4 +75,4 @@ const deleteSubscriptionController = async (req, res) => {
     }
 };
 
-module.exports = { createSubscriptionController, deleteSubscriptionController };
+module.exports = { createSubscriptionController, deleteSubscriptionController, getSubscriptions };
