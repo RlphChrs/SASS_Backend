@@ -9,6 +9,10 @@ const getAllPlans = async () => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 }
 
+const searchSubscriptions = async (name) => {
+    const snapshot = await subscriptionsRef.where("keywords", "array-contains", name.toLowerCase()).get();
+    return snapshot.empty ? null : snapshot.docs.map(doc => ({ id: doc.id, ...doc.data ()}));
+}
 
 //check by name
 const findSubscriptionByName = async (planName) => {
@@ -32,4 +36,4 @@ const deleteSubscription = async (id) => {
     return true;
 };
 
-module.exports = {findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans };
+module.exports = {findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans, searchSubscriptions };
