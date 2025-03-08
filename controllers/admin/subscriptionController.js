@@ -1,4 +1,4 @@
-const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans } = require("../../model/subscriptionModel");
+const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans, updateSubscription } = require("../../model/subscriptionModel");
 
 // get subs
 const getSubscriptions = async (_, res) => {
@@ -14,7 +14,7 @@ const getSubscriptions = async (_, res) => {
 //crerate subs
 const createSubscriptionController = async (req, res) => {
     try {
-        const { name: planName, billingType: paymentType, price, currency, billingPeriod, trialPeriod, features } = req.body;
+        const { name: planName, billingType: paymentType, price, currency, billingPeriod, trialPeriod, features, description } = req.body;
 
         console.log('currency is: ', currency)
 
@@ -41,7 +41,8 @@ const createSubscriptionController = async (req, res) => {
             paymentType,  
             price,
             currency,
-            billingPeriod, 
+            billingPeriod,
+            description, 
             trialPeriod: trialPeriodData,
             features, 
             createdAt: new Date(),
@@ -56,6 +57,7 @@ const createSubscriptionController = async (req, res) => {
         res.status(500).json({ message: "Error creating subscription", error: error.message });
     }
 };
+
 
 //protected delete (super admin only)
 const deleteSubscriptionController = async (req, res) => {

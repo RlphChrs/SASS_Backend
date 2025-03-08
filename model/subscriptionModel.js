@@ -22,7 +22,7 @@ const createSubscription = async (subscriptionData) => {
     return docRef.id;
 };
 
-//delet by ID
+//delete by ID
 const deleteSubscription = async (id) => {
     const docRef = subscriptionsRef.doc(id);
     const doc = await docRef.get();
