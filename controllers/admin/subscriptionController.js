@@ -1,4 +1,4 @@
-const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans, updateSubscription } = require("../../model/subscriptionModel");
+const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans, searchSubscriptions } = require("../../model/subscriptionModel");
 
 // get subs
 const getSubscriptions = async (_, res) => {
@@ -8,6 +8,16 @@ const getSubscriptions = async (_, res) => {
         return res.status(200).json({ success: true, plans })
     } catch (e) {
         return res.status(500).json({ success: false, message: 'Error fetching subscriptions', error: e.message})
+    }
+}
+
+// search sub by name
+const querySubscriptions = async (req, res) => {
+    try {
+        const plans = await searchSubscriptions(req.params.name)
+        return res.status(200).json({ success: true, plans })
+    } catch (e) {
+        return res.status(500).json({ success: false, message: 'Error finding plans hehe', error: e.message })
     }
 }
 
@@ -44,7 +54,8 @@ const createSubscriptionController = async (req, res) => {
             billingPeriod,
             description, 
             trialPeriod: trialPeriodData,
-            features, 
+            features,
+            keywords: planName.toLowerCase().split(' ') , 
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -77,4 +88,4 @@ const deleteSubscriptionController = async (req, res) => {
     }
 };
 
-module.exports = { createSubscriptionController, deleteSubscriptionController, getSubscriptions };
+module.exports = { createSubscriptionController, deleteSubscriptionController, getSubscriptions, querySubscriptions };
