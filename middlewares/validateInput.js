@@ -1,5 +1,3 @@
-
-
 exports.validateRegistration = (req, res, next) => {
     const { schoolName, firstName, lastName, email, password, repeatPassword, } = req.body;
   
