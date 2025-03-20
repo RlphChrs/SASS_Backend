@@ -1,4 +1,4 @@
-const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans } = require("../../model/subscriptionModel");
+const { findSubscriptionByName, createSubscription, deleteSubscription, getAllPlans, searchSubscriptions } = require("../../model/subscriptionModel");
 
 // get subs
 const getSubscriptions = async (_, res) => {
@@ -11,10 +11,20 @@ const getSubscriptions = async (_, res) => {
     }
 }
 
+// search sub by name
+const querySubscriptions = async (req, res) => {
+    try {
+        const plans = await searchSubscriptions(req.params.name)
+        return res.status(200).json({ success: true, plans })
+    } catch (e) {
+        return res.status(500).json({ success: false, message: 'Error finding plans hehe', error: e.message })
+    }
+}
+
 //crerate subs
 const createSubscriptionController = async (req, res) => {
     try {
-        const { name: planName, billingType: paymentType, price, currency, billingPeriod, trialPeriod, features } = req.body;
+        const { name: planName, billingType: paymentType, price, currency, billingPeriod, trialPeriod, features, description } = req.body;
 
         console.log('currency is: ', currency)
 
@@ -41,9 +51,11 @@ const createSubscriptionController = async (req, res) => {
             paymentType,  
             price,
             currency,
-            billingPeriod, 
+            billingPeriod,
+            description, 
             trialPeriod: trialPeriodData,
-            features, 
+            features,
+            keywords: planName.toLowerCase().split(' ') , 
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -56,6 +68,7 @@ const createSubscriptionController = async (req, res) => {
         res.status(500).json({ message: "Error creating subscription", error: error.message });
     }
 };
+
 
 //protected delete (super admin only)
 const deleteSubscriptionController = async (req, res) => {
@@ -75,4 +88,4 @@ const deleteSubscriptionController = async (req, res) => {
     }
 };
 
-module.exports = { createSubscriptionController, deleteSubscriptionController, getSubscriptions };
+module.exports = { createSubscriptionController, deleteSubscriptionController, getSubscriptions, querySubscriptions };
