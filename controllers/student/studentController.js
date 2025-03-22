@@ -139,7 +139,7 @@ const loginStudent = async (req, res) => {
             return res.status(400).json({ message: 'Invalid email or password.' });
         }
 
-        // ✅ Ensure correct studentId is used in the token
+        // ✅ Generate JWT
         const token = jwt.sign(
             { id: student.studentId, role: student.role },
             process.env.JWT_SECRET,
@@ -149,13 +149,20 @@ const loginStudent = async (req, res) => {
         console.log("✅ Login successful: Token generated for", email);
         console.log("🔍 Token contains ID:", student.studentId);
 
-        res.status(200).json({ message: 'Login successful', token, studentId: student.studentId });
+        // ✅ Add schoolName to the response
+        res.status(200).json({
+            message: 'Login successful',
+            token,
+            studentId: student.studentId,
+            schoolName: student.schoolName || "" // Avoid crashing if undefined
+        });
 
     } catch (error) {
         console.log("❌ Login Error:", error);
         res.status(500).json({ message: 'Login failed', error });
     }
 };
+
 
 const getStudentProfile = async (req, res) => {
     let { studentId } = req.params;
