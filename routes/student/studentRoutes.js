@@ -16,10 +16,10 @@ router.post('/register/student', registerStudent);
 router.post('/register/student/google', registerStudentWithGoogle);
 router.post('/login', loginStudent);
 
-// 🔹 Fetch user profile
+// Fetch user profile
 router.get('/profile/:studentId', authenticate, getStudentProfile);
 
-// 🔹 Save chat messages in `chatHistory` collection
+// Save chat messages in `chatHistory` collection
 router.post('/chat/save', authenticate, async (req, res) => {
   req.body.studentId = req.user.uid; // Attach authenticated student's ID if missing
   await saveChatHistory(req, res);

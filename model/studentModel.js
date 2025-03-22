@@ -1,29 +1,29 @@
-const { db } = require('../config/firebaseConfig');  // ✅ Keep only one import
+const { db } = require('../config/firebaseConfig');  
 const bcrypt = require('bcryptjs');
 const admin = require('firebase-admin'); 
 
-const createStudent = async (studentId, email, password, firstName, lastName) => {
-  const trimmedStudentId = studentId.trim().toLowerCase();
-  console.log(`📝 Saving student with ID: "${trimmedStudentId}"`);
+const createStudent = async (studentId, email, password, firstName, lastName, schoolName) => {
+    const trimmedStudentId = studentId.trim().toLowerCase();
+    console.log(`📝 Saving student with ID: "${trimmedStudentId}"`);
 
-  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
-  await db.collection('students').doc(trimmedStudentId).set({
-      studentId: trimmedStudentId,  
-      email,
-      password: hashedPassword,
-      role: 'Student',
-      firstName,
-      lastName,
-      createdAt: new Date(),
-      chatHistory: []
-  });
+    await db.collection('students').doc(trimmedStudentId).set({
+        studentId: trimmedStudentId,
+        email,
+        password: hashedPassword,
+        role: 'Student',
+        firstName,
+        lastName,
+        schoolName, 
+        createdAt: new Date(),
+        chatHistory: []
+    });
 
-  console.log(`✅ Student saved successfully in Firestore: "${trimmedStudentId}"`);
+    console.log(`✅ Student saved successfully in Firestore: "${trimmedStudentId}"`);
 
-  // 🔍 Verify storage
-  const savedUser = await db.collection("students").doc(trimmedStudentId).get();
-  console.log(`🔍 Firestore confirms storage:`, savedUser.data());
+    const savedUser = await db.collection("students").doc(trimmedStudentId).get();
+    console.log(`🔍 Firestore confirms storage:`, savedUser.data());
 };
 
 

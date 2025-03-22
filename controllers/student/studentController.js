@@ -5,16 +5,13 @@ const jwt = require('jsonwebtoken');
 
 
 const registerStudent = async (req, res) => {
-    const { email, password, repeatPassword, firstName, lastName, termsAccepted } = req.body;
+    const { email, password, repeatPassword, firstName, lastName, schoolName, termsAccepted } = req.body;
 
     console.log("🔍 Full Request Body:", req.body);
 
     if (!termsAccepted) {
         return res.status(400).json({ message: 'You must accept the terms and conditions.' });
     }
-
-    console.log("Received Password:", password);
-    console.log("Received Repeat Password:", repeatPassword);
 
     const trimmedPassword = password.trim();
     const trimmedRepeatPassword = repeatPassword.trim();
@@ -30,20 +27,18 @@ const registerStudent = async (req, res) => {
             return res.status(400).json({ message: "Email already registered." });
         }
 
-        // ✅ Generate a single studentId and ensure consistency
         const studentId = `stu${Date.now()}`.trim().toLowerCase();
         console.log(`📝 Generated Student ID: "${studentId}"`);
 
-        await createStudent(studentId, email, trimmedPassword, firstName, lastName);
+        await createStudent(studentId, email, trimmedPassword, firstName, lastName, schoolName);
         console.log(`✅ Student registered successfully with ID: "${studentId}"`);
 
-        res.status(201).json({ message: "Student registered successfully", studentId });
+        res.status(201).json({ message: "Student registered successfully", studentId, schoolName });
     } catch (error) {
         console.error("❌ Registration Error:", error);
         res.status(500).json({ message: "Registration failed", error });
     }
 };
-
 const registerStudentWithGoogle = async (req, res) => {
     const { email, firstName, lastName } = req.body;
 
@@ -53,7 +48,7 @@ const registerStudentWithGoogle = async (req, res) => {
             return res.status(400).json({ message: 'Email already registered.' });
         }
 
-        // ✅ Generate studentId correctly
+        // Generate studentId correctly
         const studentId = `stu${Date.now()}`.trim().toLowerCase();
         console.log(`📝 Google Registration Student ID: "${studentId}"`);
 
@@ -67,7 +62,7 @@ const registerStudentWithGoogle = async (req, res) => {
     }
 };
 
-// 🔹 Save chat message in Firebase Firestore
+//Save chat message in Firebase Firestore
 const saveChatHistory = async (req, res) => {
     const { studentId, userId, messages } = req.body; // Check for both studentId and userId
 

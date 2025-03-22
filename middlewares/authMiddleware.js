@@ -1,9 +1,8 @@
 const { admin } = require("../config/firebaseConfig");
 const { getUserById } = require("../model/userModel");
 const jwt = require("jsonwebtoken");
-const { db } = require("../config/firebaseConfig"); // ✅ Ensure Firestore is properly referenced
-
-const { getStudentById } = require("../model/studentModel");  // 🔹 Fix Import
+const { db } = require("../config/firebaseConfig");
+const { getStudentById } = require("../model/studentModel"); 
 
 const authenticate = async (req, res, next) => {
     let authHeader = req.headers.authorization;
@@ -40,8 +39,10 @@ const authenticate = async (req, res, next) => {
             email: student.email,
             role: student.role,
             firstName: student.firstName,
-            lastName: student.lastName
+            lastName: student.lastName,
+            schoolName: student.schoolName 
         };
+        
 
         console.log("✅ Student Authenticated:", req.user);
         next();
