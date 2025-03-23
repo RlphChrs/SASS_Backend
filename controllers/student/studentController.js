@@ -1,4 +1,4 @@
-const { db } = require('../../config/firebaseConfig'); // 🔥 Ensure Firestore is imported
+const { admin, db } = require('../../config/firebaseConfig'); 
 const { createStudent, getStudentByEmail, saveChatMessage, getChatHistory, getStudentById } = require('../../model/studentModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -62,29 +62,50 @@ const registerStudentWithGoogle = async (req, res) => {
     }
 };
 
-//Save chat message in Firebase Firestore
+
 const saveChatHistory = async (req, res) => {
-    const { studentId, userId, messages } = req.body; // Check for both studentId and userId
+    const { studentId, groupId, messages } = req.body;
 
-    const resolvedStudentId = studentId || userId; // Use the available ID
-
-    if (!resolvedStudentId || !messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: "Invalid request. Ensure studentId and messages array are provided." });
+    if (!studentId || !groupId || !Array.isArray(messages)) {
+        return res.status(400).json({ error: "Invalid request. Ensure studentId, groupId, and messages array are provided." });
     }
 
     try {
-        console.log(`🔍 Saving chat for student in 'chatHistory' collection: "${resolvedStudentId}"`);
-        
-        // Reference chat history collection instead of updating students directly
-        const chatRef = db.collection('chatHistory').doc(resolvedStudentId);
-        await chatRef.set({ messages }, { merge: true });
+        console.log(`📦 Saving messages for student "${studentId}" in group "${groupId}"`);
 
-        res.status(200).json({ message: "Chat saved successfully in chatHistory" });
+        // Reference to the group inside the student's conversations subcollection
+        const groupRef = db
+            .collection('chatHistory')
+            .doc(studentId)
+            .collection('conversations')
+            .doc(groupId);
+
+        const doc = await groupRef.get();
+
+        if (!doc.exists) {
+            // 🆕 First time saving this group - create it
+            await groupRef.set({
+                groupId: groupId,
+                timestamp: new Date(),
+                messages: messages
+            });
+            console.log(`✅ New chat group created: ${groupId}`);
+        } else {
+            // ➕ Group exists - append messages
+            await groupRef.update({
+                messages: admin.firestore.FieldValue.arrayUnion(...messages)
+            });
+            console.log(`✅ Messages appended to existing group: ${groupId}`);
+        }
+
+        res.status(200).json({ message: "Chat group saved successfully" });
     } catch (error) {
-        console.error("❌ Error saving chat:", error);
-        res.status(500).json({ error: "Failed to save chat history" });
+        console.error("❌ Error saving chat history:", error);
+        res.status(500).json({ error: "Failed to save chat messages" });
     }
 };
+
+
 
 // 🔹 Retrieve chat history from Firestore
 const fetchChatHistory = async (req, res) => {
@@ -97,24 +118,28 @@ const fetchChatHistory = async (req, res) => {
     try {
         console.log(`🔍 Fetching chat history for student: "${studentId}"`);
 
-        // ✅ Retrieve messages from the 'chatHistory' collection
-        const chatRef = db.collection('chatHistory').doc(studentId);
-        const chatDoc = await chatRef.get();
+        const conversationSnapshot = await db
+            .collection('chatHistory')
+            .doc(studentId)
+            .collection('conversations')
+            .orderBy('timestamp', 'asc')
+            .get();
 
-        if (!chatDoc.exists) {
-            console.log(`⚠ No chat history found for student: "${studentId}". Returning empty array.`);
-            return res.status(200).json({ messages: [] });  // ✅ Return an empty array instead of an error
-        }
+        const conversations = conversationSnapshot.docs.map(doc => ({
+            groupId: doc.id,
+            ...doc.data()
+        }));
 
-        const chatData = chatDoc.data();
-        console.log(`✅ Chat history retrieved for student ${studentId}:`, chatData.messages);
+        console.log(`✅ Grouped chat history retrieved for student ${studentId}:`, conversations.length);
 
-        res.status(200).json({ messages: chatData.messages });
+        res.status(200).json({ conversations });
     } catch (error) {
         console.error("❌ Error retrieving chat history:", error);
         res.status(500).json({ error: "Failed to fetch chat history" });
     }
 };
+
+
 
 
 // 🔹 Login Student

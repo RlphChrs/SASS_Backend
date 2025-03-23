@@ -26,8 +26,6 @@ router.post('/chat/save', authenticate, async (req, res) => {
 });
 
 
-   
-
 // 🔹 Fetch chat history from `chatHistory` collection
 router.get('/chat/history/:studentId', authenticate, async (req, res) => {
   await fetchChatHistory(req, res);

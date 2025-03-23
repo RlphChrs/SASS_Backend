@@ -88,21 +88,22 @@ const saveChatMessage = async (studentId, messages) => {
 
 // Retrieve chat history for a student
 const getChatHistory = async (studentId) => {
-  try {
-      console.log(`🔍 Fetching chat history from 'chatHistory' for student: "${studentId}"`);
-      const chatDoc = await db.collection('chatHistory').doc(studentId).get();
-
-      if (!chatDoc.exists) {
-          console.log(`⚠️ No chat history found for student ${studentId}`);
-          return [];
-      }
-
-      return chatDoc.data().messages || []; // Ensure messages exist
-  } catch (error) {
-      console.error(`❌ Error retrieving chat history for ${studentId}:`, error);
-      throw error;
-  }
-};
+    try {
+        console.log(`🔍 Fetching grouped chat history from 'chatHistory' for student: "${studentId}"`);
+        const chatDoc = await db.collection('chatHistory').doc(studentId).get();
+  
+        if (!chatDoc.exists) {
+            console.log(`⚠️ No chat history found for student ${studentId}`);
+            return [];
+        }
+  
+        return chatDoc.data().conversations || []; // Use 'conversations' instead of 'messages'
+    } catch (error) {
+        console.error(`❌ Error retrieving grouped chat history for ${studentId}:`, error);
+        throw error;
+    }
+  };
+  
 
 
 module.exports = { createStudent, getStudentByEmail, getStudentById, saveChatMessage, getChatHistory };
