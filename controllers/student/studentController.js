@@ -65,6 +65,7 @@ const registerStudentWithGoogle = async (req, res) => {
 
 const saveChatHistory = async (req, res) => {
     const { studentId, groupId, messages } = req.body;
+    console.log("📥 Incoming Chat Save Payload:", req.body);
 
     if (!studentId || !groupId || !Array.isArray(messages)) {
         return res.status(400).json({ error: "Invalid request. Ensure studentId, groupId, and messages array are provided." });
@@ -213,6 +214,7 @@ const getStudentProfile = async (req, res) => {
     }
 };
 
+//dri ninyo ibutang
 
 
-module.exports = { registerStudent, registerStudentWithGoogle, saveChatHistory, fetchChatHistory, loginStudent, getStudentProfile };
+module.exports = { registerStudent, registerStudentWithGoogle, saveChatHistory, getChatHistory, loginStudent, getStudentProfile };

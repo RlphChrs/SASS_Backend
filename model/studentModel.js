@@ -90,19 +90,41 @@ const saveChatMessage = async (studentId, messages) => {
 const getChatHistory = async (studentId) => {
     try {
         console.log(`🔍 Fetching grouped chat history from 'chatHistory' for student: "${studentId}"`);
-        const chatDoc = await db.collection('chatHistory').doc(studentId).get();
-  
-        if (!chatDoc.exists) {
-            console.log(`⚠️ No chat history found for student ${studentId}`);
+
+        // ✅ Fetch subcollection directly
+        const snapshot = await db
+            .collection('chatHistory')
+            .doc(studentId)
+            .collection('conversations')
+            .orderBy('timestamp', 'asc') // optional: sort by time
+            .get();
+
+        if (snapshot.empty) {
+            console.log(`⚠️ No conversations found for student ${studentId}`);
             return [];
         }
-  
-        return chatDoc.data().conversations || []; // Use 'conversations' instead of 'messages'
+
+        const conversations = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                groupId: data.groupId,
+                timestamp: data.timestamp?.toMillis?.() || Date.now(),
+                messages: data.messages || []
+            };
+        });
+
+        console.log(`✅ Returning ${conversations.length} conversations`);
+        return conversations;
+
     } catch (error) {
         console.error(`❌ Error retrieving grouped chat history for ${studentId}:`, error);
         throw error;
     }
-  };
+};
+
+//dri ibutang
+
   
 
 

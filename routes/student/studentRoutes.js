@@ -1,42 +1,61 @@
 const express = require('express');
 const router = express.Router();
-const { 
-    registerStudent, 
-    registerStudentWithGoogle, 
-    loginStudent, 
-    saveChatHistory, 
-    fetchChatHistory, 
-    getStudentProfile 
-} = require('../../controllers/student/studentController');
 
-const { getStudentById } = require('../../model/studentModel'); 
+const {
+    registerStudent,
+    registerStudentWithGoogle,
+    loginStudent,
+    saveChatHistory,
+    getChatHistory, // ✅ renamed for clarity & to match usage
+    getStudentProfile
+} = require('../../controllers/student/studentController'); // ✅ correct path
+
+const { getStudentById } = require('../../model/studentModel');
 const { authenticate, authorize } = require('../../middlewares/authMiddleware');
 
+// ✅ Student registration
 router.post('/register/student', registerStudent);
+
+// ✅ Google registration
 router.post('/register/student/google', registerStudentWithGoogle);
+
+// ✅ Login
 router.post('/login', loginStudent);
 
-// Fetch user profile
+// ✅ Fetch student profile
 router.get('/profile/:studentId', authenticate, getStudentProfile);
 
-// Save chat messages in `chatHistory` collection
+// ✅ Save chat group messages (authenticated route)
 router.post('/chat/save', authenticate, async (req, res) => {
-  req.body.studentId = req.user.uid; // Attach authenticated student's ID if missing
-  await saveChatHistory(req, res);
+    console.log("🛡️ Incoming /chat/save request");
+    console.log("🔐 Token decoded user:", req.user); // show what's in the token
+    console.log("📦 Incoming body before override:", req.body);
+
+    req.body.studentId = req.user?.uid; // safe assignment
+
+    console.log("📦 Final request body:", req.body);
+
+    await saveChatHistory(req, res);
 });
 
 
-// 🔹 Fetch chat history from `chatHistory` collection
-router.get('/chat/history/:studentId', authenticate, async (req, res) => {
-  await fetchChatHistory(req, res);
+// ✅ Fetch chat history with flattened timestamps
+router.get('/chat/history/:studentId', async (req, res) => {
+    try {
+        const history = await getChatHistory(req.params.studentId); // ✅ use imported function directly
+        res.status(200).json({ conversations: history });
+    } catch (error) {
+        console.error("❌ Failed to fetch chat history:", error);
+        res.status(500).json({ error: "Failed to fetch chat history" });
+    }
 });
 
-// 🔹 Student Dashboard Route
+// ✅ Student dashboard (role-protected route)
 router.get('/dashboard', authenticate, authorize(['Student']), (req, res) => {
     res.send('Welcome to the Student Dashboard.');
 });
 
-// ✅ 🔍 Debug Route to Fetch User Directly from Firestore
+// ✅ Debug Firestore fetch route (for internal testing)
 router.get('/debug-fetch/:studentId', authenticate, async (req, res) => {
     const { studentId } = req.params;
     console.log(`🛠 Debugging Firestore fetch for ID: "${studentId}"`);
@@ -54,5 +73,9 @@ router.get('/debug-fetch/:studentId', authenticate, async (req, res) => {
         res.status(500).json({ message: "Firestore query error", error });
     }
 });
+
+
+//dri ibutang
+
 
 module.exports = router;
