@@ -1,7 +1,6 @@
 const { db, admin } = require('../../config/firebaseConfig');
-const { watchFileUpload } = require('../../config/fileWatcher'); 
+const { watchFileUpload } = require('../../config/fileWatcher');
 const axios = require("axios");
-
 
 const bucket = admin.storage().bucket();
 
@@ -15,7 +14,8 @@ const uploadFile = async (req, res) => {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        const { uid, schoolId } = req.user; 
+        // ✅ Use `schoolId` instead of `schoolName` throughout
+        const { uid, schoolId } = req.user;
         const file = req.file;
 
         const fileName = `schools/${schoolId}/pdfs/${Date.now()}_${file.originalname}`;
@@ -42,10 +42,14 @@ const uploadFile = async (req, res) => {
 
             console.log("✅ File uploaded successfully:", fileUrl);
 
-            // 🔹 Call the file watcher to notify Python API
+            // 🔹 Notify external Python API via watcher
             watchFileUpload(fileName);
 
-            res.status(201).json({ message: 'File uploaded successfully', fileUrl, fileId: fileDoc.id });
+            res.status(201).json({
+                message: 'File uploaded successfully',
+                fileUrl,
+                fileId: fileDoc.id
+            });
         });
 
         stream.end(file.buffer);
@@ -59,8 +63,20 @@ const getUploadedFiles = async (req, res) => {
     try {
         const { schoolId } = req.user;
 
-        const filesSnapshot = await db.collection('uploads').where('schoolId', '==', schoolId).get();
-        const files = filesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (!schoolId) {
+            console.error("❌ Missing schoolId in request user object");
+            return res.status(400).json({ message: 'Missing schoolId for this user' });
+        }
+
+        const filesSnapshot = await db
+            .collection('uploads')
+            .where('schoolId', '==', schoolId)
+            .get();
+
+        const files = filesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
         res.status(200).json(files);
     } catch (error) {
