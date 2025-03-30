@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { submitFile } = require('../../controllers/student/submissionController');
 const { authenticate } = require('../../middlewares/authMiddleware');
+const { getStudentResponses } = require('../../controllers/student/studentNotificationController');
 
-router.post('/submit',authenticate,submitFile);
-
+router.get('/responses', authenticate, getStudentResponses);
 
 module.exports = router;

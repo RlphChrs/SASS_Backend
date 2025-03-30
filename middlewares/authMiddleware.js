@@ -53,7 +53,7 @@ const authenticate = async (req, res, next) => {
 };
 
 
-// ✅ Middleware to authorize roles
+// Middleware to authorize roles
 const authorize = (roles) => {
     return async (req, res, next) => {
         if (!req.user || !roles.includes(req.user.role)) {

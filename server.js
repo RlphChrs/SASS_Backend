@@ -9,6 +9,10 @@ const adminRoutes = require('./routes/admin/adminRoutes');
 const uploadRoutes = require('./routes/sao/uploadRoutes');
 const studentSubmissionRoutes = require('./routes/student/submissionRoutes');
 const saoSubmissionRoutes = require('./routes/sao/submissionRoutes');
+const studentUploadRoutes = require('./routes/student/studentUploadRoutes');
+const saoNotificationRoutes = require('./routes/sao/notificationRoutes');
+const saoStudentNotificationRoutes = require('./routes/sao/studentNotificationRoutes');
+const studentNotificationRoutes = require('./routes/student/studentNotificationRoutes');
 
 dotenv.config();
 
@@ -27,6 +31,15 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/student/submissions', studentSubmissionRoutes);
 app.use('/api/sao/submissions', saoSubmissionRoutes);
+app.use('/api/student/uploads', studentUploadRoutes);
+app.use('/api/sao', saoNotificationRoutes);
+app.use('/api/sao/notifications', saoStudentNotificationRoutes);
+app.use('/api/student/notifications', studentNotificationRoutes);
+
+
+
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
