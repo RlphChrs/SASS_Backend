@@ -1,4 +1,7 @@
-const { db } = require('../../config/firebaseConfig');
+const { db, admin } = require('../../config/firebaseConfig');
+const { getStudentFcmToken } = require('../../model/studentModel'); 
+const sendPushNotification = require('../../utils/sendPushNotification'); // ✅ Add this line
+
 
 const respondToStudent = async (req, res) => {
   const { studentId, studentName, subject, message } = req.body;
@@ -10,6 +13,7 @@ const respondToStudent = async (req, res) => {
 
   try {
     const timestamp = new Date();
+
 
     await db
       .collection('student_notifications')
@@ -23,6 +27,26 @@ const respondToStudent = async (req, res) => {
         timestamp,
         seen: false
       });
+
+    const studentDoc = await db.collection('students').doc(studentId).get();
+    const studentData = studentDoc.data();
+    const fcmToken = studentData?.fcmToken;
+
+    if (fcmToken) {
+      console.log(`📲 Sending push notification to ${studentId} (${studentName})`);
+
+      await sendPushNotification(fcmToken, {
+        title: `New Response from ${schoolId}`,
+        body: `${subject} - ${message.substring(0, 40)}...`,
+        data: {
+          studentId,
+          subject,
+          message
+        }
+      });
+    } else {
+      console.warn(`⚠️ No FCM token found for student ${studentId}`);
+    }
 
     return res.status(200).json({ message: 'Response sent successfully.' });
   } catch (error) {

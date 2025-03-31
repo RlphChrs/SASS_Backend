@@ -123,9 +123,41 @@ const getChatHistory = async (studentId) => {
     }
 };
 
+const saveStudentFcmToken = async (studentId, token) => {
+    if (!studentId || !token) {
+      throw new Error("Missing student ID or token");
+    }
+  
+    try {
+      await db.collection('student_tokens')
+        .doc(studentId)
+        .set({ token }, { merge: true });
+  
+      console.log(`✅ FCM token saved for student ${studentId}`);
+    } catch (error) {
+      console.error(`❌ Failed to save FCM token for ${studentId}:`, error);
+      throw error;
+    }
+  };
+  
+  // Get a student's FCM token
+  const getStudentFcmToken = async (studentId) => {
+    try {
+      const doc = await db.collection('student_tokens').doc(studentId).get();
+      if (!doc.exists) {
+        console.warn(`⚠️ No FCM token found for student ${studentId}`);
+        return null;
+      }
+      return doc.data().token;
+    } catch (error) {
+      console.error(`❌ Error retrieving FCM token for ${studentId}:`, error);
+      throw error;
+    }
+  };
+
 //dri ibutang
 
   
 
 
-module.exports = { createStudent, getStudentByEmail, getStudentById, saveChatMessage, getChatHistory };
+module.exports = { createStudent, getStudentByEmail, getStudentById, saveChatMessage, getChatHistory, saveStudentFcmToken, getStudentFcmToken };
