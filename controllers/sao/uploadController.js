@@ -13,8 +13,7 @@ const uploadFile = async (req, res) => {
             console.error("❌ No file received in request");
             return res.status(400).json({ message: 'No file uploaded' });
         }
-
-        // ✅ Use `schoolId` instead of `schoolName` throughout
+        
         const { uid, schoolId } = req.user;
         const file = req.file;
 
@@ -42,7 +41,7 @@ const uploadFile = async (req, res) => {
 
             console.log("✅ File uploaded successfully:", fileUrl);
 
-            // 🔹 Notify external Python API via watcher
+            // Notify external Python API via watcher
             watchFileUpload(fileName);
 
             res.status(201).json({

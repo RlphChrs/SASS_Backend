@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { uploadFile, getUploadedFiles, deleteFile } = require('../../controllers/sao/uploadController');
-const { authenticateSAO } = require('../../middlewares/saoAuthMiddleware'); // ✅ FIXED NAME
+const { authenticateSAO } = require('../../middlewares/saoAuthMiddleware'); 
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
