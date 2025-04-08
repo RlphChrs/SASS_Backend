@@ -15,7 +15,6 @@ exports.bookAppointment = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields.' });
     }
 
-    // Flat collection
     const appointmentsRef = db.collection('appointments');
 
     // Check for overlapping time slot
@@ -43,6 +42,28 @@ exports.bookAppointment = async (req, res) => {
     };
 
     await appointmentsRef.add(bookingData);
+
+    // 🔔 Save notification in Firestore for SAO (not push)
+    const notificationRef = db
+      .collection('notifications')
+      .doc(schoolId)
+      .collection('appointmentBookings');
+
+    await notificationRef.add({
+      type: 'appointment',
+      title: 'New Appointment Booked',
+      message: `${studentName} booked for ${date} (${fromTime} - ${toTime}).`,
+      studentId,
+      studentName,
+      date,
+      fromTime,
+      toTime,
+      description,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`📬 Notification saved for SAO of ${schoolId}`);
+
     return res.status(201).json({ message: 'Appointment booked successfully.' });
 
   } catch (err) {
@@ -180,4 +201,24 @@ exports.getAvailableTimeSlots = async (req, res) => {
   }
 };
 
+// Get appointments by date for student
+exports.getAppointmentsByDateForStudent = async (req, res) => {
+  const { date } = req.params;
+  const schoolId = req.user.schoolName;
+
+  try {
+    const snapshot = await db
+      .collection('appointments')
+      .where('schoolId', '==', schoolId)
+      .where('date', '==', date)
+      .get();
+
+    const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json({ bookings });
+
+  } catch (err) {
+    console.error('Error fetching student appointments by date:', err);
+    res.status(500).json({ error: 'Unable to fetch booked appointments.' });
+  }
+};
 
