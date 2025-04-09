@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { authenticateSAO } = require('../../middlewares/saoAuthMiddleware');
 
-const { getSubmissionNotifications, getAppointmentNotifications, getSAONotifications, markNotificationAsRead } = require('../../controllers/sao/notificationController');
+const { getSubmissionNotifications, getAppointmentNotifications, getSAONotifications, markNotificationAsRead, getReportNotifications, getReportById} 
+        = require('../../controllers/sao/notificationController');
 
 
 router.get('/notifications', authenticateSAO, getSubmissionNotifications);
 router.get('/notifications/appointments', authenticateSAO, getAppointmentNotifications);
 router.get('/notifications/all', authenticateSAO, getSAONotifications);
 router.post('/notifications/mark-read', authenticateSAO, markNotificationAsRead);
+router.get('/notifications/reports', authenticateSAO, getReportNotifications);
+router.get('/reports/:reportId', authenticateSAO, getReportById);
 
 module.exports = router;

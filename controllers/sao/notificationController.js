@@ -53,35 +53,47 @@ const getAppointmentNotifications = async (req, res) => {
 // Get all SAO-related notifications combined
 const getSAONotifications = async (req, res) => {
   try {
-    const schoolName = req.user.schoolId;
+    const schoolId = req.user.schoolId;
 
-    const [submissionSnap, appointmentSnap] = await Promise.all([
+    const [submissionSnap, appointmentSnap, reportSnap] = await Promise.all([
       db.collection('notifications')
-        .doc(schoolName)
+        .doc(schoolId)
         .collection('studentSubmissions')
         .get(),
 
       db.collection('notifications')
-        .doc(schoolName)
+        .doc(schoolId)
         .collection('appointmentBookings')
+        .get(),
+
+      db.collection('sao_notifications')
+        .doc(schoolId)
+        .collection('studentReports')
         .get()
     ]);
 
     const submissionNotifs = submissionSnap.docs.map(doc => ({
       id: doc.id,
       type: 'submission',
-      schoolId: schoolName, 
-      ...doc.data()
-    }));
-    
-    const appointmentNotifs = appointmentSnap.docs.map(doc => ({
-      id: doc.id,
-      type: 'appointment',
-      schoolId: schoolName, 
+      schoolId,
       ...doc.data()
     }));
 
-    const allNotifs = [...submissionNotifs, ...appointmentNotifs].sort(
+    const appointmentNotifs = appointmentSnap.docs.map(doc => ({
+      id: doc.id,
+      type: 'appointment',
+      schoolId,
+      ...doc.data()
+    }));
+
+    const reportNotifs = reportSnap.docs.map(doc => ({
+      id: doc.id,
+      type: 'report',
+      schoolId,
+      ...doc.data()
+    }));
+
+    const allNotifs = [...submissionNotifs, ...appointmentNotifs, ...reportNotifs].sort(
       (a, b) => b.timestamp?.seconds - a.timestamp?.seconds
     );
 
@@ -92,18 +104,23 @@ const getSAONotifications = async (req, res) => {
   }
 };
 
+
+// In your backend controller
 const markNotificationAsRead = async (req, res) => {
   const { schoolId } = req.user;
-  const { type, id } = req.body; // type = "studentSubmissions" or "appointmentBookings"
+  const { type, id } = req.body;
 
   if (!type || !id) {
     return res.status(400).json({ message: 'Missing type or id.' });
   }
 
+  let targetCollection = type === 'report' ? 'studentReports' : type === 'appointment' ? 'appointmentBookings' : 'studentSubmissions';
+  let collectionPath = type === 'report' ? 'sao_notifications' : 'notifications';
+
   try {
-    const ref = db.collection('notifications')
+    const ref = db.collection(collectionPath)
       .doc(schoolId)
-      .collection(type)
+      .collection(targetCollection)
       .doc(id);
 
     await ref.update({ read: true });
@@ -115,4 +132,52 @@ const markNotificationAsRead = async (req, res) => {
   }
 };
 
-module.exports = { getSubmissionNotifications, getAppointmentNotifications, getSAONotifications, markNotificationAsRead };
+
+
+const getReportNotifications = async (req, res) => {
+  try {
+    const schoolId = req.user.schoolId;
+
+    const snapshot = await db
+      .collection('sao_notifications')
+      .doc(schoolId)
+      .collection('studentReports')
+      .orderBy('timestamp', 'desc')
+      .limit(10)
+      .get();
+
+    const notifications = snapshot.docs.map(doc => ({
+      id: doc.id,
+      type: 'report',
+      schoolId,
+      ...doc.data()
+    }));
+
+    res.status(200).json({ notifications });
+  } catch (error) {
+    console.error('Error fetching report notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch report notifications' });
+  }
+};
+
+const getReportById = async (req, res) => {
+  try {
+    const reportId = req.params.reportId;
+
+    const reportDoc = await db.collection('reports').doc(reportId).get();
+
+    if (!reportDoc.exists) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    return res.status(200).json({ report: { id: reportDoc.id, ...reportDoc.data() } });
+  } catch (error) {
+    console.error('Error fetching report by ID:', error);
+    return res.status(500).json({ message: 'Failed to fetch report' });
+  }
+};
+
+
+module.exports = { getSubmissionNotifications, getAppointmentNotifications, getSAONotifications, markNotificationAsRead, getReportNotifications
+, getReportById
+ };

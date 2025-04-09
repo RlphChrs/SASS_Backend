@@ -1,11 +1,9 @@
-const { db, admin } = require('../../config/firebaseConfig');
-const { getStudentFcmToken } = require('../../model/studentModel'); 
-const sendPushNotification = require('../../utils/sendPushNotification'); // ✅ Add this line
-
+const { db } = require('../../config/firebaseConfig');
+const sendPushNotification = require('../../utils/sendPushNotification');
 
 const respondToStudent = async (req, res) => {
   const { studentId, studentName, subject, message } = req.body;
-  const { firstName, lastName, schoolId } = req.user;
+  const { schoolId } = req.user;
 
   if (!studentId || !subject || !message) {
     return res.status(400).json({ message: 'Missing required fields.' });
@@ -14,13 +12,18 @@ const respondToStudent = async (req, res) => {
   try {
     const timestamp = new Date();
 
+    // 🔍 Fetch school name for consistency
+    const schoolDoc = await db.collection('users').doc(schoolId).get();
+    const schoolName = schoolDoc.data()?.schoolName || 'SAO Admin';
 
+    // 💾 Save to Firestore
     await db
       .collection('student_notifications')
       .doc(studentId)
       .collection('responses')
       .add({
-        from: `${firstName} ${lastName}`,
+        type: 'submission',
+        from: schoolName,
         school: schoolId,
         subject,
         message,
@@ -28,20 +31,22 @@ const respondToStudent = async (req, res) => {
         seen: false
       });
 
+    // 🔔 Send Push Notification
     const studentDoc = await db.collection('students').doc(studentId).get();
-    const studentData = studentDoc.data();
-    const fcmToken = studentData?.fcmToken;
+    const fcmToken = studentDoc.data()?.fcmToken;
 
     if (fcmToken) {
       console.log(`📲 Sending push notification to ${studentId} (${studentName})`);
 
       await sendPushNotification(fcmToken, {
-        title: `New Response from ${schoolId}`,
-        body: `${subject} - ${message.substring(0, 40)}...`,
+        title: 'SAO responded to your submission',
+        body: `${subject} - ${message}`,
         data: {
+          type: 'submission_response',
           studentId,
           subject,
-          message
+          message,
+          sender: schoolName
         }
       });
     } else {
