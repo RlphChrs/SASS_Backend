@@ -1,4 +1,4 @@
-const { db } = require('../../config/firebaseConfig');
+const { db, admin } = require('../../config/firebaseConfig');
 const { Timestamp } = require('firebase-admin/firestore');
 
 const submitReport = async (req, res) => {
@@ -21,7 +21,7 @@ const submitReport = async (req, res) => {
       idNumberOfPerson,
       reason,
       description,
-      dateSubmitted: Timestamp.now(),
+      dateSubmitted: admin.firestore.Timestamp.now(),
       schoolId
     };
 

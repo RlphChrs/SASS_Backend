@@ -2,7 +2,7 @@ const { admin } = require("../config/firebaseConfig");
 const { getUserById } = require("../model/userModel");
 const jwt = require("jsonwebtoken");
 const { db } = require("../config/firebaseConfig");
-const { getStudentById } = require("../model/studentModel"); 
+const { getStudentById } = require("../model/studentModel");
 
 const authenticate = async (req, res, next) => {
     let authHeader = req.headers.authorization;
@@ -16,6 +16,20 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(" ")[1].trim();
     console.log("🔍 Token to verify:", token);
 
+    // ✅ Check for Super Admin static token FIRST
+    if (token === process.env.SUPER_ADMIN_TOKEN) {
+        req.user = {
+            uid: "superadmin",
+            email: process.env.ADMIN_EMAIL,
+            role: "superadmin",
+            firstName: "Super",
+            lastName: "Admin"
+        };
+        console.log("✅ Super Admin authenticated via static token.");
+        return next();
+    }
+
+    // 🔐 Proceed with normal student token validation
     try {
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
         console.log("✅ Decoded Token:", decodedToken);
@@ -28,7 +42,7 @@ const authenticate = async (req, res, next) => {
         const studentId = decodedToken.id.trim().toLowerCase();
         console.log(`🔍 Searching for student in Firestore: "${studentId}"`);
 
-        const student = await getStudentById(studentId);  // 🔹 Fix Function Call
+        const student = await getStudentById(studentId);
         if (!student) {
             console.error(`❌ Student not found in Firestore for ID: "${studentId}"`);
             return res.status(401).json({ message: "Student not found in Firestore." });
@@ -40,9 +54,8 @@ const authenticate = async (req, res, next) => {
             role: student.role,
             firstName: student.firstName,
             lastName: student.lastName,
-            schoolName: student.schoolName 
+            schoolName: student.schoolName
         };
-        
 
         console.log("✅ Student Authenticated:", req.user);
         next();
@@ -52,8 +65,7 @@ const authenticate = async (req, res, next) => {
     }
 };
 
-
-// Middleware to authorize roles
+// ✅ No change here
 const authorize = (roles) => {
     return async (req, res, next) => {
         if (!req.user || !roles.includes(req.user.role)) {

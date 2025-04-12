@@ -14,7 +14,7 @@ const respondToReport = async (req, res) => {
     const schoolDoc = await db.collection('users').doc(schoolId).get();
     const schoolName = schoolDoc.data()?.schoolName || 'SAO Admin';
 
-    // 💾 Save response to Firestore
+    // 💾 Save response in Firestore (student_notifications)
     await db
       .collection('student_notifications')
       .doc(studentId)
@@ -28,7 +28,7 @@ const respondToReport = async (req, res) => {
         timestamp: new Date(),
       });
 
-    // ✅ Mark report notification as read
+    // ✅ Mark the sao notification as read
     await db
       .collection('sao_notifications')
       .doc(schoolId)
@@ -36,7 +36,13 @@ const respondToReport = async (req, res) => {
       .doc(reportId)
       .update({ read: true });
 
-    // 🔔 Send push notification
+    // ✅ NEW: Update report status in main `reports` collection
+    await db.collection('reports').doc(reportId).update({
+      status: 'Responded',
+      respondedAt: new Date()
+    });
+
+    // 🔔 Send Push Notification to student
     const studentDoc = await db.collection('students').doc(studentId).get();
     const fcmToken = studentDoc.data()?.fcmToken;
 
@@ -54,7 +60,7 @@ const respondToReport = async (req, res) => {
       });
     }
 
-    return res.status(200).json({ message: 'Response sent and report marked as read.' });
+    return res.status(200).json({ message: 'Response sent and report updated.' });
   } catch (error) {
     console.error('❌ Error responding to report:', error.message);
     return res.status(500).json({ message: 'Failed to respond to report.' });

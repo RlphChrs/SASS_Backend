@@ -16,6 +16,10 @@ const studentNotificationRoutes = require('./routes/student/studentNotificationR
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const studentReportRoutes = require('./routes/student/studentReportRoutes');
 const reportResponseRoutes = require('./routes/sao/reportResponseRoutes');
+const saoStudentListRoutes = require('./routes/sao/studentListRoutes');
+const saoReportListRoutes = require('./routes/sao/reportListRoutes');
+
+
 
 
 
@@ -29,7 +33,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
 app.use('/api/users', userRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/admin', adminRoutes);
@@ -43,6 +46,9 @@ app.use('/api/student/notifications', studentNotificationRoutes);
 app.use('/api/student/appointments', appointmentRoutes); 
 app.use('/api/student/report', studentReportRoutes);
 app.use('/api/sao/respond', reportResponseRoutes);
+app.use('/api/sao', saoStudentListRoutes);
+app.use('/api/sao', saoReportListRoutes);
+
 
 
 
