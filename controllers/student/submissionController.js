@@ -15,7 +15,7 @@ const submitFile = async (req, res) => {
     const studentData = studentDoc.data();
     const fullName = `${studentData.firstName} ${studentData.lastName}`;
     const studentId = studentData.studentId;
-    const schoolName = studentData.schoolName; // Needed for notification
+    const schoolName = studentData.schoolName;
     const submissionTime = new Date();
 
     const submissionData = {
