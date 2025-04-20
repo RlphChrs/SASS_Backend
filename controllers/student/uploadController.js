@@ -22,6 +22,9 @@ const uploadFileForStudent = async (req, res) => {
     const schoolName = studentData.schoolName;
     const submissionTime = new Date();
 
+    // ✅ Properly sanitize the reason
+    const reason = req.body.reason?.trim() !== '' ? req.body.reason : 'No reason provided';
+
     // Upload to Firebase Storage
     const bucket = admin.storage().bucket();
     const file = req.file;
@@ -43,28 +46,28 @@ const uploadFileForStudent = async (req, res) => {
       expires: '03-01-2030',
     });
 
-    fs.unlinkSync(tempFilePath); // Clean up local temp file
+    fs.unlinkSync(tempFilePath);
 
-    // 🔥 Save submission in Firestore
+    // Save submission in Firestore
     const submissionData = {
       studentUid,
       studentId,
       studentName: fullName,
       fileUrl: url,
       fileName: file.originalname,
-      reason: req.body.reason || 'No reason provided',
+      reason, 
       date: submissionTime.toLocaleDateString('en-GB'),
       time: submissionTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       timestamp: submissionTime,
       status: 'pending',
       feedback: null,
       feedbackTimestamp: null,
-      schoolName // ✅ Required for SAO filtering
+      schoolName 
     };
 
     const docRef = await db.collection('submissions').add(submissionData);
 
-    // 🔔 Notify SAO
+    // Notify SAO
     const notificationRef = db
       .collection('notifications')
       .doc(schoolName)
@@ -76,14 +79,16 @@ const uploadFileForStudent = async (req, res) => {
       studentName: fullName,
       fileName: file.originalname,
       fileUrl: url,
-      reason: req.body.reason || 'No reason provided',
+      reason, 
       timestamp: submissionTime,
       seen: false
     });
 
     return res.status(200).json({
       message: 'File submitted successfully',
-      submissionId: docRef.id
+      submissionId: docRef.id,
+      fileUrl: url,
+      fileName: file.originalname
     });
 
   } catch (error) {

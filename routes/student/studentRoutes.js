@@ -6,26 +6,26 @@ const {
     registerStudentWithGoogle,
     loginStudent,
     saveChatHistory,
-    getChatHistory, // ✅ renamed for clarity & to match usage
+    getChatHistory, 
     getStudentProfile
-} = require('../../controllers/student/studentController'); // ✅ correct path
+} = require('../../controllers/student/studentController'); 
 
 const { getStudentById } = require('../../model/studentModel');
 const { authenticate, authorize } = require('../../middlewares/authMiddleware');
 
-// ✅ Student registration
+//  Student registration
 router.post('/register/student', registerStudent);
 
-// ✅ Google registration
+//  Google registration
 router.post('/register/student/google', registerStudentWithGoogle);
 
-// ✅ Login
+//  Login
 router.post('/login', loginStudent);
 
-// ✅ Fetch student profile
+//  Fetch student profile
 router.get('/profile/:studentId', authenticate, getStudentProfile);
 
-// ✅ Save chat group messages (authenticated route)
+//  Save chat group messages (authenticated route)
 router.post('/chat/save', authenticate, async (req, res) => {
     console.log("🛡️ Incoming /chat/save request");
     console.log("🔐 Token decoded user:", req.user); // show what's in the token
@@ -39,10 +39,10 @@ router.post('/chat/save', authenticate, async (req, res) => {
 });
 
 
-// ✅ Fetch chat history with flattened timestamps
+// Fetch chat history with flattened timestamps
 router.get('/chat/history/:studentId', async (req, res) => {
     try {
-        const history = await getChatHistory(req.params.studentId); // ✅ use imported function directly
+        const history = await getChatHistory(req.params.studentId); 
         res.status(200).json({ conversations: history });
     } catch (error) {
         console.error("❌ Failed to fetch chat history:", error);
@@ -50,12 +50,12 @@ router.get('/chat/history/:studentId', async (req, res) => {
     }
 });
 
-// ✅ Student dashboard (role-protected route)
+// Student dashboard (role-protected route)
 router.get('/dashboard', authenticate, authorize(['Student']), (req, res) => {
     res.send('Welcome to the Student Dashboard.');
 });
 
-// ✅ Debug Firestore fetch route (for internal testing)
+// Debug Firestore fetch route (for internal testing)
 router.get('/debug-fetch/:studentId', authenticate, async (req, res) => {
     const { studentId } = req.params;
     console.log(`🛠 Debugging Firestore fetch for ID: "${studentId}"`);
@@ -74,8 +74,9 @@ router.get('/debug-fetch/:studentId', authenticate, async (req, res) => {
     }
 });
 
+const { updateStudentProfile } = require('../../controllers/student/studentProfileController');
 
-//dri ibutang
+router.put('/update-profile', authenticate, updateStudentProfile);
 
 
 module.exports = router;
