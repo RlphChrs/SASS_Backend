@@ -22,9 +22,11 @@ const registerStudent = async (req, res) => {
     }
 
     try {
+        
         const schoolSnapshot = await db
             .collection('users')
-            .where('schoolName', '==', schoolName)
+            .where('role', '==', 'School Admin')
+            .where('schoolId', '==', schoolName.trim())
             .limit(1)
             .get();
 
@@ -51,6 +53,7 @@ const registerStudent = async (req, res) => {
         res.status(500).json({ message: "Registration failed", error });
     }
 };
+
 
 
 const registerStudentWithGoogle = async (req, res) => {
