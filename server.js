@@ -18,9 +18,8 @@ const studentReportRoutes = require('./routes/student/studentReportRoutes');
 const reportResponseRoutes = require('./routes/sao/reportResponseRoutes');
 const saoStudentListRoutes = require('./routes/sao/studentListRoutes');
 const saoReportListRoutes = require('./routes/sao/reportListRoutes');
-
-
-
+const saoStatsRoutes = require('./routes/sao/saoStatsRoutes'); 
+const studentMatchRoutes = require('./routes/sao/studentMatchRoutes');
 
 
 dotenv.config();
@@ -48,7 +47,8 @@ app.use('/api/student/report', studentReportRoutes);
 app.use('/api/sao/respond', reportResponseRoutes);
 app.use('/api/sao', saoStudentListRoutes);
 app.use('/api/sao', saoReportListRoutes);
-
+app.use('/api/sao/stats', saoStatsRoutes);
+app.use('/api/sao/match', studentMatchRoutes);
 
 
 

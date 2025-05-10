@@ -39,7 +39,7 @@ const uploadFile = async (req, res) => {
                 uploadedAt: new Date()
             });
 
-            console.log("✅ File uploaded successfully:", fileUrl);
+            console.log(" File uploaded successfully:", fileUrl);
 
             // Notify external Python API via watcher
             watchFileUpload(fileName);
@@ -84,31 +84,65 @@ const getUploadedFiles = async (req, res) => {
 };
 
 const deleteFile = async (req, res) => {
-    try {
-        const { fileUrl, fileId } = req.body;
+    console.log("🔥 Entered deleteFile()");
 
-        if (!fileUrl || !fileId) {
-            return res.status(400).json({ message: 'File ID and URL are required' });
+    try {
+        const { fileUrl, fileId, schoolId, fileName } = req.body;
+
+        if (!fileUrl || !fileId || !schoolId || !fileName) {
+            console.error("❌ Missing required fields:", { fileUrl, fileId, schoolId, fileName });
+            return res.status(400).json({ message: 'File ID, URL, file name, and schoolId are required' });
         }
 
         const storageBucketUrl = `https://storage.googleapis.com/${bucket.name}/`;
-        const filePath = fileUrl.replace(storageBucketUrl, "");
-
-        console.log("🔹 Deleting File:", filePath);
+        const filePath = decodeURIComponent(fileUrl.replace(storageBucketUrl, "")); // ✅ safer with decode
+        console.log("🔹 Computed file path:", filePath);
 
         const file = bucket.file(filePath);
         const [exists] = await file.exists();
+        console.log("📁 File exists check result:", exists);
 
         if (!exists) {
             console.error("❌ File does not exist in Firebase Storage:", filePath);
             return res.status(404).json({ message: 'File not found in storage' });
         }
 
+        // Step: Delete file from Firebase
         await file.delete();
-        await db.collection('uploads').doc(fileId).delete();
+        console.log(" Step: File deleted from Firebase");
 
-        console.log("✅ File deleted successfully:", filePath);
+        // Step: Delete Firestore document
+        await db.collection('uploads').doc(fileId).delete();
+        console.log(" Step: Firestore document deleted");
+
+        // Step: Save file name to deletedFiles for future filtering
+        await db
+            .collection("deletedFiles")
+            .doc(schoolId)
+            .collection("files")
+            .add({
+                fileName,
+                deletedAt: new Date()
+            });
+        console.log("🗑️ Step: File recorded in deletedFiles collection");
+
+        // Step: Notify Python chatbot backend to delete Pinecone chunks
+        try {
+            const response = await axios.post("http://localhost:8000/delete-chunks", {
+                schoolId,
+                fileName
+            });
+            console.log("✅ Step: Pinecone cleanup called:", response.data);
+        } catch (err) {
+            console.error("❌ Step: Axios error while notifying chatbot backend:", err.message);
+            if (err.response) {
+                console.error("🔸 Response Status:", err.response.status);
+                console.error("🔸 Response Data:", err.response.data);
+            }
+        }
+
         res.status(200).json({ message: 'File deleted successfully' });
+
     } catch (error) {
         console.error("❌ Delete Error:", error.message);
         res.status(500).json({ message: 'Failed to delete file', error: error.message });
