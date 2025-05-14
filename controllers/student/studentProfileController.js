@@ -1,30 +1,34 @@
 const { db } = require('../../config/firebaseConfig');
 
-// PUT /api/students/update-profile
-const updateStudentProfile = async (req, res) => {
+const getStudentProfile = async (req, res) => {
   try {
-    const studentId = req.user.uid; // ✅ Comes from your custom authMiddleware
-    const { course, year, section } = req.body;
+    const studentId = req.user.studentId || req.user.uid;
+    const schoolId = req.user.schoolId || req.user.schoolName;
 
-    // ✅ Check that at least one field is provided
-    if (!course && !year && !section) {
-      return res.status(400).json({ error: 'Please provide at least one field to update.' });
+    if (!schoolId || !studentId) {
+      return res.status(400).json({ error: "Missing schoolId or studentId." });
     }
 
-    const updates = {};
-    if (course) updates.course = course;
-    if (year) updates.year = year;
-    if (section) updates.section = section;
+    const docRef = db
+      .collection('uploaded_students')
+      .doc(schoolId)
+      .collection('records')
+      .doc(studentId);
 
-    const studentRef = db.collection('students').doc(studentId);
-    await studentRef.update(updates);
+    const docSnap = await docRef.get();
 
-    console.log(`✅ Student ${studentId} profile updated with:`, updates);
-    res.status(200).json({ message: 'Profile updated successfully' });
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: 'Profile not found in uploaded records.' });
+    }
+
+    const profile = docSnap.data();
+
+    console.log(`✅ Profile fetched for student ${studentId} from school ${schoolId}`);
+    res.status(200).json(profile);
   } catch (error) {
-    console.error('❌ Error updating student profile:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    console.error('❌ Error fetching student profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
 
-module.exports = { updateStudentProfile };
+module.exports = { getStudentProfile };

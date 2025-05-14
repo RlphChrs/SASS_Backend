@@ -5,53 +5,80 @@ const jwt = require('jsonwebtoken');
 
 
 const registerStudent = async (req, res) => {
-    const { email, password, repeatPassword, firstName, lastName, schoolName, termsAccepted } = req.body;
+  const { email, password, repeatPassword, studentId, schoolName, termsAccepted } = req.body;
 
-    console.log(" Full Request Body:", req.body);
+  console.log("📥 Registration request:", req.body);
 
-    if (!termsAccepted) {
-        return res.status(400).json({ message: 'You must accept the terms and conditions.' });
+  if (!termsAccepted) {
+    return res.status(400).json({ message: 'You must accept the terms and conditions.' });
+  }
+
+  const trimmedPassword = password.trim();
+  const trimmedRepeatPassword = repeatPassword.trim();
+
+  if (trimmedPassword !== trimmedRepeatPassword) {
+    console.log("❌ Passwords do NOT match after trimming!");
+    return res.status(400).json({ message: "Passwords do not match." });
+  }
+
+  if (!studentId || !schoolName) {
+    return res.status(400).json({ message: "Missing studentId or schoolName." });
+  }
+
+  try {
+    // ✅ 1. Verify that the school exists
+    const schoolSnapshot = await db
+      .collection('users')
+      .where('role', '==', 'School Admin')
+      .where('schoolId', '==', schoolName.trim())
+      .limit(1)
+      .get();
+
+    if (schoolSnapshot.empty) {
+      console.warn(`❌ School not found: "${schoolName}"`);
+      return res.status(404).json({ message: `The school "${schoolName}" is not registered.` });
     }
 
-    const trimmedPassword = password.trim();
-    const trimmedRepeatPassword = repeatPassword.trim();
+    // ✅ 2. Check if studentId exists in uploaded_students
+    const studentDoc = await db
+      .collection('uploaded_students')
+      .doc(schoolName)
+      .collection('records')
+      .doc(studentId)
+      .get();
 
-    if (trimmedPassword !== trimmedRepeatPassword) {
-        console.log(" Passwords do NOT match after trimming!");
-        return res.status(400).json({ message: "Passwords do not match." });
+    if (!studentDoc.exists) {
+      console.warn(`❌ Student ID "${studentId}" not found in uploaded list for ${schoolName}`);
+      return res.status(404).json({ message: "Student ID not found in the school's uploaded list." });
     }
 
-    try {
-        
-        const schoolSnapshot = await db
-            .collection('users')
-            .where('role', '==', 'School Admin')
-            .where('schoolId', '==', schoolName.trim())
-            .limit(1)
-            .get();
+    const matchedData = studentDoc.data();
 
-        if (schoolSnapshot.empty) {
-            console.warn(` School not found: "${schoolName}"`);
-            return res.status(404).json({ message: `The school "${schoolName}" is not registered.` });
-        }
-
-        const existingStudent = await getStudentByEmail(email);
-        if (existingStudent) {
-            return res.status(400).json({ message: "Email already registered." });
-        }
-
-        const studentId = `stu${Date.now()}`.trim().toLowerCase();
-        console.log(` Generated Student ID: "${studentId}"`);
-
-        await createStudent(studentId, email, trimmedPassword, firstName, lastName, schoolName);
-        console.log(` Student registered successfully with ID: "${studentId}"`);
-
-        res.status(201).json({ message: "Student registered successfully", studentId, schoolName });
-
-    } catch (error) {
-        console.error(" Registration Error:", error);
-        res.status(500).json({ message: "Registration failed", error });
+    // ✅ 3. Prevent duplicate registrations
+    const existingStudent = await getStudentByEmail(email);
+    if (existingStudent) {
+      return res.status(400).json({ message: "Email already registered." });
     }
+
+    // ✅ 4. Proceed to create the student using their legit ID
+    await createStudent(studentId, email, trimmedPassword, matchedData.firstName, matchedData.lastName, schoolName);
+
+    // ✅ 5. Mark as registered in uploaded_students
+    await db
+      .collection('uploaded_students')
+      .doc(schoolName)
+      .collection('records')
+      .doc(studentId)
+      .update({ registered: true });
+
+    console.log(`✅ Student "${studentId}" registered successfully.`);
+
+    res.status(201).json({ message: "Student registered successfully", studentId, schoolName });
+
+  } catch (error) {
+    console.error("❌ Registration Error:", error);
+    res.status(500).json({ message: "Registration failed", error });
+  }
 };
 
 

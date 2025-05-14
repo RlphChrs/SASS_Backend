@@ -2,7 +2,6 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const { db } = require('../../config/firebaseConfig');
 
-// ✅ Multer setup – accept any file field name
 const storage = multer.memoryStorage();
 const upload = multer({ storage }).any();
 
@@ -15,7 +14,7 @@ const uploadStudentExcel = async (req, res) => {
       return res.status(400).json({ error: 'File upload failed.' });
     }
 
-    const file = req.files?.[0]; // ✅ Safely access first uploaded file
+    const file = req.files?.[0]; 
     const { schoolId } = req.body;
 
     console.log("📄 File metadata:", file);
@@ -71,12 +70,9 @@ const uploadStudentExcel = async (req, res) => {
 
         const existing = existingRecords[studentId];
 
-        if (existing?.registered === true) {
-          skippedCount++;
-          continue;
-        }
-
         const docRef = collectionRef.doc(studentId);
+
+        // ✅ Allow updates even if registered, but preserve the flag
         batch.set(docRef, {
           ...student,
           registered: existing?.registered === true,
@@ -103,6 +99,7 @@ const uploadStudentExcel = async (req, res) => {
     }
   });
 };
+
 
 const getUploadedStudents = async (req, res) => {
   const { schoolId } = req.params;

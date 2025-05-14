@@ -1,17 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-const {
-    registerStudent,
-    registerStudentWithGoogle,
-    loginStudent,
-    saveChatHistory,
-    getChatHistory, 
-    getStudentProfile
+const { registerStudent, registerStudentWithGoogle, loginStudent, saveChatHistory, getChatHistory 
 } = require('../../controllers/student/studentController'); 
 
 const { getStudentById } = require('../../model/studentModel');
 const { authenticate, authorize } = require('../../middlewares/authMiddleware');
+const { getStudentProfile } = require('../../controllers/student/studentProfileController');
 
 //  Student registration
 router.post('/register/student', registerStudent);
@@ -22,8 +17,6 @@ router.post('/register/student/google', registerStudentWithGoogle);
 //  Login
 router.post('/login', loginStudent);
 
-//  Fetch student profile
-router.get('/profile/:studentId', authenticate, getStudentProfile);
 
 //  Save chat group messages (authenticated route)
 router.post('/chat/save', authenticate, async (req, res) => {
@@ -74,9 +67,7 @@ router.get('/debug-fetch/:studentId', authenticate, async (req, res) => {
     }
 });
 
-const { updateStudentProfile } = require('../../controllers/student/studentProfileController');
-
-router.put('/update-profile', authenticate, updateStudentProfile);
+router.get('/profile', authenticate, getStudentProfile);
 
 
 module.exports = router;
