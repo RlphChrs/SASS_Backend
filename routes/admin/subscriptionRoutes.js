@@ -5,8 +5,9 @@ const { createSubscriptionController, deleteSubscriptionController, getSubscript
 
 // adminRoutes already includes (/subscriptions) ayg katinga kung puro rana linya naa dira hahahahaha
 router.get('/', getSubscriptions)
-router.post("/", authenticate, authorize(["Super Admin"]), createSubscriptionController);
-router.get('/search/:name', authenticate, authorize(['Super Admin']), querySubscriptions)
-router.delete("/:id", authenticate, authorize(["Super Admin"]), deleteSubscriptionController);
+router.post("/", authenticate, authorize(["superadmin"]), createSubscriptionController);
+router.get('/search/:name', authenticate, authorize(['superadmin']), querySubscriptions);
+router.delete("/:id", authenticate, authorize(["superadmin"]), deleteSubscriptionController);
+
 
 module.exports = router;

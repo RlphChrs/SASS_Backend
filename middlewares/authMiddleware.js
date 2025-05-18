@@ -65,7 +65,7 @@ const authenticate = async (req, res, next) => {
     }
 };
 
-// ✅ No change here
+
 const authorize = (roles) => {
     return async (req, res, next) => {
         if (!req.user || !roles.includes(req.user.role)) {
@@ -75,5 +75,6 @@ const authorize = (roles) => {
         next();
     };
 };
+
 
 module.exports = { authenticate, authorize };

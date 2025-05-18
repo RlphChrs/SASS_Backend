@@ -12,6 +12,7 @@ router.get("/dashboard", authenticate, authorize(["superadmin"]), (req, res) => 
   res.send("Welcome to the Admin Dashboard.");
 });
 
+
 router.use("/subscriptions", subscriptionRoutes);
 router.use("/school-users", schoolUserRoutes); 
 

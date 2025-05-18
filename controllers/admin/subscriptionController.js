@@ -24,9 +24,20 @@ const querySubscriptions = async (req, res) => {
 //crerate subs
 const createSubscriptionController = async (req, res) => {
     try {
-        const { name: planName, billingType: paymentType, price, currency, billingPeriod, trialPeriod, features, description } = req.body;
+        const {
+            name: planName,
+            billingType: paymentType,
+            price,
+            currency,
+            billingPeriod,
+            trialPeriod,
+            features,
+            description
+        } = req.body;
 
-        console.log('currency is: ', currency)
+        console.log('📥 Incoming create subscription request');
+        console.log('🔹 Currency:', currency);
+        console.log('🔹 Full Request Body:', req.body);
 
         // ✅ Validate required fields
         if (!planName || !paymentType || !price || !billingPeriod || !features) {
@@ -52,23 +63,31 @@ const createSubscriptionController = async (req, res) => {
             price,
             currency,
             billingPeriod,
-            description, 
+            description: description || "",
             trialPeriod: trialPeriodData,
             features,
-            keywords: planName.toLowerCase().split(' ') , 
+            keywords: planName.toLowerCase().split(' '),
             createdAt: new Date(),
             updatedAt: new Date()
         };
 
+        console.log("📦 Subscription Data to Save:", subscriptionData);
+
         // ✅ Store in Firestore
         const subscriptionId = await createSubscription(subscriptionData);
+
+        console.log("✅ Subscription saved with ID:", subscriptionId);
         res.status(201).json({ message: "Subscription plan created successfully", id: subscriptionId });
 
     } catch (error) {
-        res.status(500).json({ message: "Error creating subscription", error: error.message });
+        console.error("❌ Subscription creation failed:", error);
+        res.status(500).json({
+            message: "Error creating subscription",
+            error: error.message,
+            stack: error.stack
+        });
     }
 };
-
 
 //protected delete (super admin only)
 const deleteSubscriptionController = async (req, res) => {
